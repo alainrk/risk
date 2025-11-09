@@ -6,6 +6,7 @@
  */
 
 
+/* OUTPUT_ARCH(riscv) */
 /* Kernel entry point */
 ENTRY(boot)
 
@@ -15,6 +16,7 @@ SECTIONS {
 
     /* Code section */
     .text :{
+        /* KEEP tells the linker not to remove this section during garbage collection */ 
         KEEP(*(.text.boot));
         /* Any .text and ".text."-starting section will be here */
         *(.text .text.*);
