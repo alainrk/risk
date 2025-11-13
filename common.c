@@ -47,7 +47,11 @@ void printf(const char *fmt, ...) {
       case 'x': { // Exadecimal
         unsigned value = va_arg(vargs, unsigned);
         for (int i = 7; i >= 0; i--) {
+          // Get 4 bits at a time (hex representation),
+          // shifting value to right, then mask to keep
+          // the last 4 bits everytime (0xf).
           unsigned nibble = (value >> (i * 4)) & 0xf;
+          // Get the corresponding hex digit and print it
           putchar("0123456789abcdef"[nibble]);
         }
       }
