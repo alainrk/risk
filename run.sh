@@ -17,7 +17,7 @@ CC=/opt/homebrew/opt/llvm/bin/clang
 #   -Wl,-Tkernel.ld Specify the linker script.
 #   -Wl,-Map=kernel.map Output a map file (linker allocation result).
 CFLAGS="-std=c11 -O2 -g3 -Wall -Wextra --target=riscv32-unknown-elf -fuse-ld=lld -fno-stack-protector -ffreestanding -nostdlib"
-$CC $CFLAGS -Wl,-Tkernel.ld -Wl,-Map=kernel.map -o kernel.elf kernel.c
+$CC $CFLAGS -Wl,-Tkernel.ld -Wl,-Map=kernel.map -o kernel.elf kernel.c common.c
 
 # Start QEMU:
 #   -machine virt       Start a virt machine.

@@ -1,4 +1,5 @@
 #include "kernel.h"
+#include "common.h"
 
 typedef unsigned char uint8_t;
 typedef unsigned int uint32_t;
@@ -45,10 +46,7 @@ void *memset(void *buf, char c, size_t n) {
 }
 
 void kernel_main(void) {
-  const char *s = "\n\nHello World!\n";
-  for (int i = 0; s[i] != '\0'; i++) {
-    putchar(s[i]);
-  }
+  printf("\nHello %s! - %d + %d = %x\n", "world", 20, 22, 20 + 22);
 
   // Sometimes the bss section is initialized at 0 by the bootloader, but it's
   // better to make sure it's done.
