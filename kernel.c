@@ -1,24 +1,6 @@
 #include "kernel.h"
 #include "common.h"
 
-void kernel_main(void) {
-  printf("\nHello %s! - %d + %d = %x\n", "world", 20, 22, 20 + 22);
-  printf("%s cmp %s = %d\n", "Hello", "Hello", strcmp("Hello", "Hello"));
-  printf("%s cmp %s = %d\n", "Hello", "World", strcmp("Hello", "World"));
-  printf("%s cmp %s = %d\n", "World", "Hello", strcmp("World", "Hello"));
-  char *s = "Test this and that.";
-  char *p = "                   ";
-  p = strcpy(p, s);
-  printf("Copied s (%s) into p (%s)\n", s, p);
-
-  // Sometimes the bss section is initialized at 0 by the bootloader, but it's
-  // better to make sure it's done.
-  memset(__bss, 0, (size_t)__bss_end - (size_t)__bss);
-  // Infinite kernel loop.
-  for (;;)
-    __asm__ __volatile__("wfi");
-}
-
 // As specified in kerel.ld boot() is the entry point of the kernel after boot.
 // __volatile__ avoids the compiler optimizing the function.
 // Attributes:
@@ -36,6 +18,16 @@ __attribute__((section(".text.boot"))) __attribute__((naked)) void boot(void) {
       : [stack_top] "r"(
           __stack_top) // Pass the stack top address as %[stack_top]
   );
+}
+
+void handle_trap(struct trap_frame *f) {
+  (void)f;
+  uint32_t scause = READ_CSR(scause);
+  uint32_t stval = READ_CSR(stval);
+  uint32_t user_pc = READ_CSR(sepc);
+
+  PANIC("unexpected trap scause=%x, stval=%x, sepc=%x\n", scause, stval,
+        user_pc);
 }
 
 // Exception handler.
@@ -94,9 +86,9 @@ __attribute__((naked)) __attribute__((aligned(4))) void kernel_entry(void) {
                        "sw s10, 4 * 28(sp)\n"
                        "sw s11, 4 * 29(sp)\n"
 
+                       // Restoring SP
                        "csrr a0, sscratch\n"
                        "sw a0, 4 * 30(sp)\n"
-
                        "mv a0, sp\n"
                        "call handle_trap\n"
 
@@ -132,4 +124,32 @@ __attribute__((naked)) __attribute__((aligned(4))) void kernel_entry(void) {
                        "lw s11, 4 * 29(sp)\n"
                        "lw sp,  4 * 30(sp)\n"
                        "sret\n");
+}
+
+void kernel_main(void) {
+  // Test
+  // printf("\nHello %s! - %d + %d = %x\n", "world", 20, 22, 20 + 22);
+  // printf("%s cmp %s = %d\n", "Hello", "Hello", strcmp("Hello", "Hello"));
+  // printf("%s cmp %s = %d\n", "Hello", "World", strcmp("Hello", "World"));
+  // printf("%s cmp %s = %d\n", "World", "Hello", strcmp("World", "Hello"));
+  // char *s = "Test this and that.";
+  // char *p = "                   ";
+  // p = strcpy(p, s);
+  // printf("Copied s (%s) into p (%s)\n", s, p);
+
+  // Sometimes the bss section is initialized at 0 by the bootloader, but it's
+  // better to make sure it's done.
+  memset(__bss, 0, (size_t)__bss_end - (size_t)__bss);
+
+  // Tells the CPU where the exception handler is located.
+  WRITE_CSR(stvec, (uint32_t)kernel_entry);
+
+  // Illegal "pseudo-instruction" translated into:
+  // `csrrw x0, cycle, x0`
+  // Where cycle is readonly so triggers an exception.
+  __asm__ __volatile__("unimp");
+
+  // Infinite kernel loop.
+  for (;;)
+    __asm__ __volatile__("wfi");
 }

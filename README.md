@@ -32,6 +32,20 @@ curl -LO https://github.com/qemu/qemu/raw/v8.0.4/pc-bios/opensbi-riscv32-generic
 C-A c # switch to QEMU console
 ```
 
+## Utils
+
+### Handling panics
+
+```
+PANIC: kernel.c:30: unexpected trap scause=00000002, stval=00000000, sepc=${ADDRESS}
+```
+
+Use the following to get the filename and line where the exception is raised:
+
+```sh
+llvm-addr2line -e kernel.elf ${ADDRESS}
+```
+
 ## References
 
 - [OS in 1k Lines](https://operating-system-in-1000-lines.vercel.app/en/)
