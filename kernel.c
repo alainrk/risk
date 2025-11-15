@@ -3,6 +3,13 @@
 
 void kernel_main(void) {
   printf("\nHello %s! - %d + %d = %x\n", "world", 20, 22, 20 + 22);
+  printf("%s cmp %s = %d\n", "Hello", "Hello", strcmp("Hello", "Hello"));
+  printf("%s cmp %s = %d\n", "Hello", "World", strcmp("Hello", "World"));
+  printf("%s cmp %s = %d\n", "World", "Hello", strcmp("World", "Hello"));
+  char *s = "Test this and that.";
+  char *p = "                   ";
+  p = strcpy(p, s);
+  printf("Copied s (%s) into p (%s)\n", s, p);
 
   // Sometimes the bss section is initialized at 0 by the bootloader, but it's
   // better to make sure it's done.

@@ -99,3 +99,31 @@ void printf(const char *fmt, ...) {
 end:
   va_end(vargs);
 }
+
+void *memcpy(void *dst, const void *src, size_t n) {
+  const uint8_t *from = (const uint8_t *)src;
+  uint8_t *to = (uint8_t *)dst;
+  while (n--)
+    *(to++) = *(from++);
+  return (void *)to;
+}
+
+char *strcpy(char *dst, const char *src) {
+  char *d = dst;
+  while (*src)
+    *(d++) = *(src++);
+  *d = '\0';
+  return dst;
+}
+
+int strcmp(const char *s1, const char *s2) {
+  while (*s1 && *s2) {
+    if (*s1 != *s2)
+      break;
+    s1++;
+    s2++;
+  }
+  // Compare following the POSIX Spec
+  // https://www.man7.org/linux/man-pages/man3/strcmp.3.html#:~:text=both%20interpreted%20as%20type%20unsigned%20char
+  return *(unsigned char *)s1 - *(unsigned char *)s2;
+}
