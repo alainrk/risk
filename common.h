@@ -6,17 +6,21 @@ typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
 typedef uint32_t size_t;
-typedef uint32_t paddr_t; // Physical address type
-typedef uint32_t vaddr_t; // Virtual address type, equivalent to uintptr_t in stdlib
+// Physical address type
+typedef uint32_t paddr_t;
+// Virtual address type, equivalent to uintptr_t in stdlib
+typedef uint32_t vaddr_t;
 
-#define true  1
+#define true 1
 #define false 0
-#define NULL  ((void *) 0)
+#define NULL ((void *)0)
+#define PAGE_SIZE 4096
 
 // References to the symbols created in kernel.ld
 // The "[]" is used as we need the start address of these values, omitting it
 // will give us the value at the 0th byte of that section.
 extern char __bss[], __bss_end[], __stack_top[];
+extern char __free_ram[], __free_ram_end[];
 
 // These are not coming from stdarg C standard library,
 // are instead provided as builtin by clang compiler.
@@ -24,9 +28,12 @@ extern char __bss[], __bss_end[], __stack_top[];
 #define va_start __builtin_va_start
 #define va_end __builtin_va_end
 #define va_arg __builtin_va_arg
-#define align_up(value, align)   __builtin_align_up(value, align) // align must be power of 2
-#define is_aligned(value, align) __builtin_is_aligned(value, align) // align must be power of 2 
-#define offsetof(type, member)   __builtin_offsetof(type, member) // Get offset of member in a struct
+#define align_up(value, align)                                                 \
+  __builtin_align_up(value, align) // align must be power of 2
+#define is_aligned(value, align)                                               \
+  __builtin_is_aligned(value, align) // align must be power of 2
+#define offsetof(type, member)                                                 \
+  __builtin_offsetof(type, member) // Get offset of member in a struct
 
 struct sbiret {
   long error;

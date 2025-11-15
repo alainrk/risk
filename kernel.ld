@@ -45,4 +45,10 @@ SECTIONS {
     /* 128KB */
     . += 128 * 1024;
     __stack_top = .;
+
+    /* Memory region designed to be managed by the memory allocator (heap) */
+    . = ALIGN(4096); /* 4KB (1 page) */
+    __free_ram = .;
+    . += 64 * 1024 * 1024; /* 64MB */
+    __free_ram_end = .;
 }

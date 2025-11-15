@@ -1,6 +1,20 @@
 #include "kernel.h"
 #include "common.h"
 
+// Bump (or linear) allocator
+paddr_t alloc_pages(uint32_t n) {
+  // Only init at the beginning at the start of the available ram region.
+  static paddr_t next_paddr = (paddr_t)__free_ram;
+  paddr_t paddr = next_paddr;
+  next_paddr += n * PAGE_SIZE;
+
+  if (next_paddr > (paddr_t)__free_ram_end)
+    PANIC("out of memory");
+
+  memset((void *)paddr, 0, n * PAGE_SIZE);
+  return paddr;
+}
+
 // As specified in kerel.ld boot() is the entry point of the kernel after boot.
 // __volatile__ avoids the compiler optimizing the function.
 // Attributes:
@@ -30,7 +44,7 @@ void handle_trap(struct trap_frame *f) {
         user_pc);
 }
 
-// Exception handler.
+// Exception handler definition.
 // Entry point of the exception handler to be stores in stvec (Supervisor Trap
 // Vector Base Address Register).
 //
@@ -127,7 +141,7 @@ __attribute__((naked)) __attribute__((aligned(4))) void kernel_entry(void) {
 }
 
 void kernel_main(void) {
-  // Test
+  // XXX: Test
   // printf("\nHello %s! - %d + %d = %x\n", "world", 20, 22, 20 + 22);
   // printf("%s cmp %s = %d\n", "Hello", "Hello", strcmp("Hello", "Hello"));
   // printf("%s cmp %s = %d\n", "Hello", "World", strcmp("Hello", "World"));
@@ -147,7 +161,7 @@ void kernel_main(void) {
   // Illegal "pseudo-instruction" translated into:
   // `csrrw x0, cycle, x0`
   // Where cycle is readonly so triggers an exception.
-  __asm__ __volatile__("unimp");
+  // __asm__ __volatile__("unimp");
 
   // Infinite kernel loop.
   for (;;)
