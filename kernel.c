@@ -222,6 +222,32 @@ struct process *create_process(uint32_t pc) {
   return proc;
 }
 
+void delay(void) {
+  for (int i = 0; i < 500000000; i++)
+    __asm__ __volatile__("nop");
+}
+
+struct process *proc_a;
+struct process *proc_b;
+
+void proc_a_entry(void) {
+  printf("starting process A\n");
+  while (1) {
+    putchar('A');
+    switch_context(&proc_a->sp, &proc_b->sp);
+    delay();
+  }
+}
+
+void proc_b_entry(void) {
+  printf("starting process B\n");
+  while (1) {
+    putchar('B');
+    switch_context(&proc_b->sp, &proc_a->sp);
+    delay();
+  }
+}
+
 void kernel_main(void) {
   printf("\nRisk Kernel started...\n");
 
@@ -232,31 +258,37 @@ void kernel_main(void) {
   // Tells the CPU where the exception handler is located.
   WRITE_CSR(stvec, (uint32_t)kernel_entry);
 
-  // Test printf
-  // printf("\nHello %s! - %d + %d = %x\n", "world", 20, 22, 20 + 22);
-  // printf("%s cmp %s = %d\n", "Hello", "Hello", strcmp("Hello", "Hello"));
-  // printf("%s cmp %s = %d\n", "Hello", "World", strcmp("Hello", "World"));
-  // printf("%s cmp %s = %d\n", "World", "Hello", strcmp("World", "Hello"));
-  // char *s = "Test this and that.";
-  // char *p = "                   ";
-  // p = strcpy(p, s);
-  // printf("Copied s (%s) into p (%s)\n", s, p);
-
-  // Test pages allocation
-  // paddr_t paddr0 = alloc_pages(1);
-  // paddr_t paddr1 = alloc_pages(2);
-  // paddr_t paddr2 = alloc_pages(3);
-  // printf("alloc_pages test: paddr0=%x\n", paddr0);
-  // printf("alloc_pages test: paddr1=%x\n", paddr1);
-  // printf("alloc_pages test: paddr2=%x\n", paddr2);
-
-  // Test PANIC
-  // Illegal "pseudo-instruction" translated into:
-  // `csrrw x0, cycle, x0`
-  // Where cycle is readonly so triggers an exception.
-  // __asm__ __volatile__("unimp");
+  proc_a = create_process((uint32_t)proc_a_entry);
+  proc_b = create_process((uint32_t)proc_b_entry);
+  proc_a_entry();
 
   // Infinite kernel loop.
   for (;;)
     __asm__ __volatile__("wfi");
 }
+
+// void test(void) {
+// Test printf
+// printf("\nHello %s! - %d + %d = %x\n", "world", 20, 22, 20 + 22);
+// printf("%s cmp %s = %d\n", "Hello", "Hello", strcmp("Hello", "Hello"));
+// printf("%s cmp %s = %d\n", "Hello", "World", strcmp("Hello", "World"));
+// printf("%s cmp %s = %d\n", "World", "Hello", strcmp("World", "Hello"));
+// char *s = "Test this and that.";
+// char *p = "                   ";
+// p = strcpy(p, s);
+// printf("Copied s (%s) into p (%s)\n", s, p);
+
+// Test pages allocation
+// paddr_t paddr0 = alloc_pages(1);
+// paddr_t paddr1 = alloc_pages(2);
+// paddr_t paddr2 = alloc_pages(3);
+// printf("alloc_pages test: paddr0=%x\n", paddr0);
+// printf("alloc_pages test: paddr1=%x\n", paddr1);
+// printf("alloc_pages test: paddr2=%x\n", paddr2);
+
+// Test PANIC
+// Illegal "pseudo-instruction" translated into:
+// `csrrw x0, cycle, x0`
+// Where cycle is readonly so triggers an exception.
+// __asm__ __volatile__("unimp");
+// }
