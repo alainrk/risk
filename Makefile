@@ -1,3 +1,8 @@
+.PHONY: setup run disasm check-addr clean
+
+setup:
+	@./setup.sh
+
 run:
 	./run.sh
 
@@ -6,3 +11,6 @@ disasm:
 
 check-addr:
 	llvm-nm kernel.elf
+
+clean:
+	rm -f kernel.elf kernel.map
