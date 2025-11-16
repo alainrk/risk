@@ -141,7 +141,16 @@ __attribute__((naked)) __attribute__((aligned(4))) void kernel_entry(void) {
 }
 
 void kernel_main(void) {
-  // XXX: Test
+  printf("\nRisk Kernel started...\n");
+
+  // Sometimes the bss section is initialized at 0 by the bootloader, but it's
+  // better to make sure it's done.
+  memset(__bss, 0, (size_t)__bss_end - (size_t)__bss);
+
+  // Tells the CPU where the exception handler is located.
+  WRITE_CSR(stvec, (uint32_t)kernel_entry);
+
+  // Test printf
   // printf("\nHello %s! - %d + %d = %x\n", "world", 20, 22, 20 + 22);
   // printf("%s cmp %s = %d\n", "Hello", "Hello", strcmp("Hello", "Hello"));
   // printf("%s cmp %s = %d\n", "Hello", "World", strcmp("Hello", "World"));
@@ -151,13 +160,15 @@ void kernel_main(void) {
   // p = strcpy(p, s);
   // printf("Copied s (%s) into p (%s)\n", s, p);
 
-  // Sometimes the bss section is initialized at 0 by the bootloader, but it's
-  // better to make sure it's done.
-  memset(__bss, 0, (size_t)__bss_end - (size_t)__bss);
+  // Test pages allocation
+  // paddr_t paddr0 = alloc_pages(1);
+  // paddr_t paddr1 = alloc_pages(2);
+  // paddr_t paddr2 = alloc_pages(3);
+  // printf("alloc_pages test: paddr0=%x\n", paddr0);
+  // printf("alloc_pages test: paddr1=%x\n", paddr1);
+  // printf("alloc_pages test: paddr2=%x\n", paddr2);
 
-  // Tells the CPU where the exception handler is located.
-  WRITE_CSR(stvec, (uint32_t)kernel_entry);
-
+  // Test PANIC
   // Illegal "pseudo-instruction" translated into:
   // `csrrw x0, cycle, x0`
   // Where cycle is readonly so triggers an exception.
