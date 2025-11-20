@@ -1,7 +1,10 @@
 #include "kernel.h"
 #include "common.h"
 
-struct process procs[PROCS_MAX];
+struct process procs[PROCS_MAX]; // Process table
+struct process *current_proc;    // Currently running process
+struct process *idle_proc; // Idle process to run when there's no other runnable
+                           // process available
 
 // Bump (or linear) allocator
 paddr_t alloc_pages(uint32_t n) {
@@ -188,7 +191,7 @@ struct process *create_process(uint32_t pc) {
   struct process *proc = NULL;
 
   int i;
-  for (int i = 0; i < PROCS_MAX; i++) {
+  for (i = 0; i < PROCS_MAX; i++) {
     if (procs[i].state == PROC_UNUSED) {
       proc = &procs[i];
       break;
@@ -220,6 +223,24 @@ struct process *create_process(uint32_t pc) {
   proc->sp = (uint32_t)sp;
 
   return proc;
+}
+
+void yield(void) {
+  struct process *next = idle_proc;
+  for (int i = 0; i < PROCS_MAX; i++) {
+    struct process *proc = &procs[(current_proc->pid + 1) % PROCS_MAX];
+    if (proc->state == PROC_RUNNABLE && proc->pid != 0) {
+      next = proc;
+    }
+  }
+
+  // No new process to run
+  if (next == current_proc)
+    return;
+
+  struct process *prev = current_proc;
+  current_proc = next;
+  switch_context(&prev->sp, &next->sp);
 }
 
 void delay(void) {
@@ -258,9 +279,18 @@ void kernel_main(void) {
   // Tells the CPU where the exception handler is located.
   WRITE_CSR(stvec, (uint32_t)kernel_entry);
 
+  // Create the idle process to be run every time there's no other runnable
+  // process.
+  idle_proc = create_process((uint32_t)NULL);
+  idle_proc->pid = 0;
+  current_proc = idle_proc;
+
+  // Create two test process
   proc_a = create_process((uint32_t)proc_a_entry);
   proc_b = create_process((uint32_t)proc_b_entry);
-  proc_a_entry();
+
+  // Run!
+  yield();
 
   // Infinite kernel loop.
   for (;;)
