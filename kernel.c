@@ -228,9 +228,10 @@ struct process *create_process(uint32_t pc) {
 void yield(void) {
   struct process *next = idle_proc;
   for (int i = 0; i < PROCS_MAX; i++) {
-    struct process *proc = &procs[(current_proc->pid + 1) % PROCS_MAX];
-    if (proc->state == PROC_RUNNABLE && proc->pid != 0) {
+    struct process *proc = &procs[(current_proc->pid + i) % PROCS_MAX];
+    if (proc->state == PROC_RUNNABLE && proc->pid > 0) {
       next = proc;
+      break;
     }
   }
 
@@ -243,8 +244,8 @@ void yield(void) {
   switch_context(&prev->sp, &next->sp);
 }
 
-void delay(void) {
-  for (int i = 0; i < 500000000; i++)
+void delay(int sleep) {
+  for (int i = 0; i < sleep; i++)
     __asm__ __volatile__("nop");
 }
 
@@ -255,8 +256,8 @@ void proc_a_entry(void) {
   printf("starting process A\n");
   while (1) {
     putchar('A');
-    switch_context(&proc_a->sp, &proc_b->sp);
-    delay();
+    delay(500000000);
+    yield();
   }
 }
 
@@ -264,8 +265,8 @@ void proc_b_entry(void) {
   printf("starting process B\n");
   while (1) {
     putchar('B');
-    switch_context(&proc_b->sp, &proc_a->sp);
-    delay();
+    delay(500000000);
+    yield();
   }
 }
 
@@ -291,6 +292,7 @@ void kernel_main(void) {
 
   // Run!
   yield();
+  PANIC("Yield to idle process");
 
   // Infinite kernel loop.
   for (;;)
